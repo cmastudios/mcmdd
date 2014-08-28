@@ -1,0 +1,57 @@
+.\"Modified from man(1) of FreeBSD, the NetBSD mdoc.template, and mdoc.samples.
+.\"See Also:
+.\"man mdoc.samples for a complete listing of options
+.\"man mdoc for the short list of editing options
+.\"/usr/share/misc/mdoc.template
+.Dd 8/16/14               \" DATE
+.Dt mcmdd 1      \" Program name and manual section number
+.Os Darwin
+.Sh NAME                 \" Section Header - required - don't modify 
+.Nm mcmdd
+.\" Use .Nm macro to designate other names for the documented program.
+.Nd Monitor, control, and restart select server applications
+.Sh SYNOPSIS             \" Section Header - required - don't modify
+.Nm
+.Op Fl nf              \" [-abcd]
+.Op Fl d Ar path         \" [-a path]
+.Sh DESCRIPTION          \" Section Header - required - don't modify
+\"234567890123456789012345678901234567890123456789012345678901234567890123456789
+mcmdd monitors, controls, and restarts other application servers. It has been
+designed specifically for control of game servers, specifically Minecraft servers.
+.Pp                      \" Inserts a space
+A list of flags and their descriptions:
+.Bl -tag -width -indent  \" Differs from above in tag removed 
+.It Fl n                 \"-a flag as a list item
+Do not fork the daemon into the background.
+.It Fl f
+Fork the daemon into the background on start. This is the default.
+.It Fl d Ar path
+Change the daemon's data directory. This is where log files will deposited, as
+well as where the server files and configuration are expected to be.
+.El                      \" Ends the list
+.Pp
+.\" .Sh ENVIRONMENT      \" May not be needed
+.\" .Bl -tag -width "ENV_VAR_1" -indent \" ENV_VAR_1 is width of the string ENV_VAR_1
+.\" .It Ev ENV_VAR_1
+.\" Description of ENV_VAR_1
+.\" .It Ev ENV_VAR_2
+.\" Description of ENV_VAR_2
+.\" .El                      
+.Sh FILES                \" File used or created by the topic of the man page
+.Bl -tag -width "$DATA/mcmdd.conf" -compact
+.It Pa $DATA/mcmdd.conf
+Daemon configuration file
+.El                      \" Ends the list
+.\" .Sh DIAGNOSTICS       \" May not be needed
+.\" .Bl -diag
+.\" .It Diagnostic Tag
+.\" Diagnostic informtion here.
+.\" .It Diagnostic Tag
+.\" Diagnostic informtion here.
+.\" .El
+.Sh SEE ALSO 
+.\" List links in ascending order by section, alphabetically within a section.
+.\" Please do not reference files that do not exist without filing a bug report
+.Xr java 1
+.\" .Sh BUGS              \" Document known, unremedied bugs
+.\" .Sh HISTORY           \" Document history if command behaves in a unique manner
