@@ -63,7 +63,7 @@ static void load_server(const char *name)
     path = config_get(config, name, "path", "");
     command = config_get(config, name, "command", DEFAULT_COMMAND);
     
-    servers[servers_sp++] = server_new(path, command, "main");
+    servers[servers_sp++] = server_new(path, command, name);
 }
 
 static void load_servers()
