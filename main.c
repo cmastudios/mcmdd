@@ -22,7 +22,6 @@ const char *program_name;
 struct config_t *config;
 struct server_t **servers;
 pthread_t **threads;
-pthread_t control_thread;
 int servers_sp, threads_sp;
 
 void control_init();
@@ -228,6 +227,11 @@ static inline void fork_background()
     freopen("mcmdd.err", "a", stderr);
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);
+    FILE *pidfile = fopen("mcmdd.pid", "w");
+    if (!pidfile)
+        err(1, "Failed to write pid file");
+    fprintf(pidfile, "%d\n", sid);
+    fclose(pidfile);
 }
 
 int main(int argc, char **argv)

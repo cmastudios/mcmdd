@@ -32,7 +32,7 @@ void control_init()
 {
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = INADDR_ANY;
-    sin.sin_port = htons(atoi(config_get(config, NULL, "port", 8361)));
+    sin.sin_port = htons(atoi(config_get(config, NULL, "port", "8361")));
     
 //    sun.sun_family = AF_UNIX;
 //    strcpy(sun.sun_path, "mcmdd.sock");
@@ -133,21 +133,26 @@ static inline void qwrite(int fd, const char *message)
 
 static inline void send_log(int fd, struct server_t *server)
 {
-    int sp;
-    char buf[SERVER_LINEMAX + 2];
+    int sp, bufsp;
+    char buf[(SERVER_LINEMAX + 2) * SERVER_MAXLINES];
 
+    bufsp = 0;
     qwrite(fd, TSTART);
     if (server->lines[server->linsp]) {
         // means data has been overwritten, so start reading from linsp forward
         for (sp = server->linsp; sp < SERVER_MAXLINES; ++sp) {
-            sprintf(buf, "%s\n", server->lines[sp]);
-            qwrite(fd, buf);
+            // add line to buffer at current position
+            sprintf(buf + bufsp, "%s\n", server->lines[sp]);
+            // buffer is written into like one giant block
+            bufsp += strlen(server->lines[sp]) + 1; // +1 to overwrite the last \0
         }
     }
     for (sp = 0; sp < server->linsp; ++sp) {
-        sprintf(buf, "%s\n", server->lines[sp]);
-        qwrite(fd, buf);
+        sprintf(buf + bufsp, "%s\n", server->lines[sp]);
+        bufsp += strlen(server->lines[sp]) + 1;
     }
+    // send the whole buffer
+    write(fd, buf, bufsp);
     qwrite(fd, TEND);
 }
 
@@ -260,7 +265,7 @@ clean:
 
 void *control_thread(void *data)
 {
-    control_read(data);
+    control_read(*((int *)data));
     pthread_exit(NULL);
 }
 
@@ -277,7 +282,7 @@ void control_accept()
         else if (fd == -1)
             err(1, "accept");
         pthread_t threadId;
-        rc = pthread_create(&threadId, NULL, &control_thread, fd);
+        rc = pthread_create(&threadId, NULL, &control_thread, (void *) &fd);
         if (pthread_detach(threadId) != 0) {
             warn("Failed to detach control thread, running sync");
             pthread_join(threadId, &status);

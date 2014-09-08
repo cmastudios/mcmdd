@@ -98,7 +98,7 @@ static inline void process_line(struct server_t *server, const char *line)
     printf("[%s] #%2d: %s\n", server->id, server->linsp, line);
     if (server->status == STATUS_STARTING && strstr(line, "Done"))
         server->status = STATUS_RUNNING;
-    time(server->last_read);
+    time(&server->last_read);
 }
 
 static void read_line(int fd, struct server_t *server)
