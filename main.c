@@ -14,6 +14,8 @@
 #include <err.h>
 #include <sys/stat.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 #include "config.h"
 #include "server.h"
@@ -234,6 +236,17 @@ static inline void fork_background()
     fclose(pidfile);
 }
 
+static inline void change_user(const char *name)
+{
+    struct passwd *user = getpwnam(name);
+    if (!user)
+        errx(1, "User %s not found", name);
+    if (setgid(user->pw_uid) < 0)
+        err(1, "Changing group");
+    if (setuid(user->pw_uid) < 0)
+        err(1, "Changing user");
+}
+
 int main(int argc, char **argv)
 {
     int ch, dofork;
@@ -243,7 +256,7 @@ int main(int argc, char **argv)
     dofork = 0; // change to 1 for release
     data_dir = NULL;
     
-    while ((ch = getopt(argc, argv, "nfd:")) != -1) {
+    while ((ch = getopt(argc, argv, "nfd:u:")) != -1) {
         switch (ch) {
             case 'n':
                 dofork = 0;
@@ -254,6 +267,9 @@ int main(int argc, char **argv)
             case 'd':
                 data_dir = strdup(optarg);
                 break;
+            case 'u':
+                change_user(optarg);
+                break;
             case '?':
             default:
                 usage();
@@ -262,16 +278,16 @@ int main(int argc, char **argv)
     argc -= optind;
     argv += optind;
     
+    if (data_dir && chdir(data_dir) < 0)
+        err(EXIT_FAILURE, "Failed to open data dir %s", data_dir);
+    free(data_dir);
+
     if (dofork)
         fork_background();
     
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
     signal(SIGCHLD, signal_handler);
-    
-    if (data_dir && chdir(data_dir) < 0)
-        err(EXIT_FAILURE, "Failed to open data dir %s", data_dir);
-    free(data_dir);
     
     load_config();
     control_init();
