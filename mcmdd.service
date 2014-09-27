@@ -1,0 +1,12 @@
+[Unit]
+Description=MCommander Server Manager
+
+[Service]
+Type=forking
+PIDFile=/var/local/mcmdd/mcmdd.pid
+User=mcmdd
+ExecStart=/usr/local/bin/mcmdd -d /var/local/mcmdd -f
+
+[Install]
+WantedBy=multi-user.target
+
