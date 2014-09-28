@@ -241,7 +241,7 @@ static inline void change_user(const char *name)
     struct passwd *user = getpwnam(name);
     if (!user)
         errx(1, "User %s not found", name);
-    if (setgid(user->pw_uid) < 0)
+    if (setgid(user->pw_gid) < 0)
         err(1, "Changing group");
     if (setuid(user->pw_uid) < 0)
         err(1, "Changing user");
