@@ -10,11 +10,11 @@
 
 . /lib/lsb/init-functions
 prog=mcmdd
-PIDFILE=/var/local/mcmdd/mcmdd.pid
+PIDFILE=/var/lib/mcmdd/mcmdd.pid
 DESC="MCommander Server Manager"
 start() {
 	log_daemon_msg "Starting $DESC" "$prog"
-	start_daemon -p $PIDFILE /usr/local/bin/mcmdd -d /var/local/mcmdd -f -u mcmdd
+	start_daemon -p $PIDFILE /usr/bin/mcmdd -d /var/lib/mcmdd -f -u mcmdd
 	if [ $? -ne 0 ]; then
 		log_end_msg 1
 		exit 1
@@ -27,7 +27,7 @@ start() {
 
 stop() {
 	log_daemon_msg "Stopping $DESC" "$prog"
-	killproc -p $PIDFILE  /usr/local/bin/mcmdd
+	killproc -p $PIDFILE  /usr/bin/mcmdd
 	if [ $? -ne 0 ]; then
 		log_end_msg 1
 		exit 1
