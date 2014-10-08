@@ -227,6 +227,8 @@ static inline void fork_background()
     close(STDERR_FILENO);
     freopen("mcmdd.log", "a", stdout);
     freopen("mcmdd.err", "a", stderr);
+    fchmod(0, S_IRUSR | S_IWUSR);
+    fchmod(1, S_IRUSR | S_IWUSR);
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);
     FILE *pidfile = fopen("mcmdd.pid", "w");
@@ -234,6 +236,7 @@ static inline void fork_background()
         err(1, "Failed to write pid file");
     fprintf(pidfile, "%d\n", sid);
     fclose(pidfile);
+    chmod("mcmdd.pid", S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 }
 
 static inline void change_user(const char *name)
