@@ -3,7 +3,7 @@
 .\"man mdoc.samples for a complete listing of options
 .\"man mdoc for the short list of editing options
 .\"/usr/share/misc/mdoc.template
-.Dd 8/16/14               \" DATE
+.Dd 11/04/14               \" DATE
 .Dt mcmdd 1      \" Program name and manual section number
 .Os Darwin
 .Sh NAME                 \" Section Header - required - don't modify 
@@ -27,6 +27,12 @@ Fork the daemon into the background on start. This is the default.
 .It Fl d Ar path
 Change the daemon's data directory. This is where log files will deposited, as
 well as where the server files and configuration are expected to be.
+.It Fl u Ar user
+Change the user that will execute the daemon. This can be used to prevent giving
+unnecessary privileges to the application, which is good for security. This can
+only be used if the daemon is initially started as root. If your environment
+already starts the daemon with different privileges or containment, this is
+unnecessary.
 .El                      \" Ends the list
 .Pp
 .\" .Sh ENVIRONMENT      \" May not be needed
