@@ -3,9 +3,8 @@ Description=MCommander Server Manager
 
 [Service]
 Type=forking
-PIDFile=/var/local/mcmdd/mcmdd.pid
-User=mcmdd
-ExecStart=/usr/local/bin/mcmdd -d /var/local/mcmdd -f
+PIDFile=/var/lib/mcmdd/mcmdd.pid
+ExecStart=/usr/bin/mcmdd -d /var/lib/mcmdd -f -u mcmdd
 
 [Install]
 WantedBy=multi-user.target
