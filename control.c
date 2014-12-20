@@ -67,7 +67,7 @@ static int read_line(char *out, int fd, int max)
     while (status > 0) {
         status = poll(&pfd, 1, 10000);
         if (status == 0)
-            return -1;
+            return -2;
         else if (status == -1 && errno == EINTR)
             continue; // interrupted sys call
         else if (status == -1)
@@ -113,7 +113,7 @@ int valid(const char *key, const char *server)
     return valid;
 }
 
-#define APPNAME "mcmdd/0.1\n"
+#define APPNAME "mcmdd/1.0.1\n"
 #define INVALID "ERR Invalid command.\n"
 #define SVNEXT "OK Need key.\n"
 #define KYNEXT "OK Need server.\n"
@@ -131,12 +131,13 @@ static inline void qwrite(int fd, const char *message)
     write(fd, message, strlen(message));
 }
 
-static inline void send_log(int fd, struct server_t *server)
+static inline void send_log(int fd, struct server_t *server, const char *start_line)
 {
-    int sp, bufsp;
+    int sp, bufsp, found_line;
     char buf[(SERVER_LINEMAX + 2) * SERVER_MAXLINES];
 
     bufsp = 0;
+    found_line = 0;
     qwrite(fd, TSTART);
     if (server->lines[server->linsp]) {
         // means data has been overwritten, so start reading from linsp forward
@@ -145,11 +146,19 @@ static inline void send_log(int fd, struct server_t *server)
             sprintf(buf + bufsp, "%s\n", server->lines[sp]);
             // buffer is written into like one giant block
             bufsp += strlen(server->lines[sp]) + 1; // +1 to overwrite the last \0
+            if (start_line && !found_line && strstr(start_line, server->lines[sp]) == start_line) {
+                found_line = 1;
+                bufsp = 0;
+            }
         }
     }
     for (sp = 0; sp < server->linsp; ++sp) {
         sprintf(buf + bufsp, "%s\n", server->lines[sp]);
         bufsp += strlen(server->lines[sp]) + 1;
+        if (start_line && !found_line && strstr(start_line, server->lines[sp]) == start_line) {
+            found_line = 1;
+            bufsp = 0;
+        }
     }
     // send the whole buffer
     write(fd, buf, bufsp);
@@ -162,13 +171,19 @@ void control_read(int fd)
     char tmp[256], msg[256];
     char *key, *server;
     int vald;
+    int ka;
+    int r;
     struct server_t *serv;
     
     key = server = NULL;
     vald = 0;
     serv = NULL;
+    ka = 0;
     while (1) {
-        if (read_line(tmp, fd, 256) < 1)
+        r = read_line(tmp, fd, 256);
+        if (r == -2 && ka)
+            continue;
+        else if (r < 1)
             goto clean;
         if (strstr(tmp, "SERVER ") == tmp) {
             free(server);
@@ -243,7 +258,13 @@ void control_read(int fd)
                 qwrite(fd, BADKEY);
                 continue;
             }
-            send_log(fd, serv);
+            if (tmp[3] == ' ') {
+                send_log(fd, serv, tmp + 4);
+            } else {
+                send_log(fd, serv, NULL);
+            }
+        } else if (strstr(tmp, "KEEPALIVE") == tmp) {
+            ka = 1;
         } else {
             qwrite(fd, INVALID);
         }
