@@ -2,11 +2,11 @@ Source: mcmdd
 Section: contrib/utils
 Priority: optional
 Maintainer: Connor Monahan <admin@cmastudios.me>
-Build-Depends: debhelper (>= 8.0.0), cmake, dpkg-dev (>= 1.16.1~)
-Standards-Version: 3.9.3
+Build-Depends: debhelper (>= 8.0.0), cmake, dpkg-dev (>= 1.16.1~), dh-systemd (>= 1.5)
+Standards-Version: 3.9.6
 Homepage: http://cmastudios.me
-#Vcs-Git: git://git.debian.org/collab-maint/mcmdd.git
-#Vcs-Browser: http://git.debian.org/?p=collab-maint/mcmdd.git;a=summary
+Vcs-Git: https://github.com/cmastudios/mcmdd.git
+Vcs-Browser: https://github.com/cmastudios/mcmdd
 
 Package: mcmdd
 Architecture: any

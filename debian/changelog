@@ -1,3 +1,26 @@
+mcmdd (1.0.1-2) stable; urgency=medium
+
+  [ cmastudios ]
+  * Add documentation for the user flag
+  * Added example config
+  * Update paths in systemd script
+  * Protocol changes for continouous connections
+  * Fedora support
+  * Script to make source TARs
+  * GitHub documentation
+
+  [ Connor Monahan ]
+  * Create README.md
+
+  [ cmastudios ]
+  * Update version
+
+  [ Connor Monahan ]
+  * Dockerize
+  * Give the container java 8 and fix repos
+
+ -- Connor Monahan <admin@cmastudios.me>  Thu, 13 Aug 2015 15:46:03 -0500
+
 mcmdd (0.1-1) unstable; urgency=low
 
   * Initial release

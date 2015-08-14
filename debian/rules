@@ -15,8 +15,11 @@ include /usr/share/dpkg/buildflags.mk
 CFLAGS+=$(CPPFLAGS)
 CXXFLAGS+=$(CPPFLAGS)
 
-override_dh_installinit:
-	dh_installinit --onlyscripts
+#override_dh_installinit:
+#	dh_installinit --onlyscripts
+
+override_dh_auto_configure:
+	dh_auto_configure -- -DWITH_SYSTEMD=ON
 
 %:
-	dh $@ 
+	dh $@ --with systemd 
