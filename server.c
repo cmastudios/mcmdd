@@ -172,7 +172,20 @@ int server_kill(struct server_t *server, int exit)
 
 void server_resume(struct server_t *server)
 {
+    if (server->status == STATUS_BACKUP) {
+        // do not resume the server during a backup
+        return;
+    }
     server->ctrl = CTRL_LAUNCH;
+}
+
+void server_set_backup(struct server_t *server, int flag)
+{
+    if (flag) {
+        server->status = STATUS_BACKUP;
+    } else {
+        server->status = STATUS_STOPPED;
+    }
 }
 
 int server_start(struct server_t *server)

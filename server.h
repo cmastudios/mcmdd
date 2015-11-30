@@ -21,6 +21,8 @@ enum server_status_t {
     STATUS_RUNNING,
     // server_stop was used
     STATUS_STOPPING,
+    // automatic backup monitor triggered
+    STATUS_BACKUP
 };
 
 enum server_control_t {
@@ -36,8 +38,8 @@ enum server_control_t {
 
 enum exit {
     EXIT_PAUSE = 0,
-    EXIT_FULL = 1,
-    EXIT_RESTART = 2
+    EXIT_FULL,
+    EXIT_RESTART
 };
 
 #define SERVER_MAXLINES 1024
@@ -64,5 +66,6 @@ void server_stop(struct server_t *server, int exit);
 void server_stop_kill(struct server_t *server, int exit, int wait);
 int server_kill(struct server_t *server, int exit);
 void server_resume(struct server_t *server);
+void server_set_backup(struct server_t *server, int flag);
 
 #endif
