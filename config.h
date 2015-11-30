@@ -20,6 +20,10 @@ struct config_t {
 };
 
 #define DEFAULT_COMMAND "java -jar server.jar nogui"
+#define DEFAULT_BACKUP "tar cf %s.tar %s"
+#define MAX_WAIT 60
+#define BACKUP_DIRECTORY "backups"
+#define BACKUP_DATE "%Y-%m-%d_%H-%M-%S"
 
 struct config_t *config_new(void);
 int config_load(struct config_t *config, FILE *file);

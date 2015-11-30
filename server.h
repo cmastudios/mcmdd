@@ -42,6 +42,7 @@ enum exit {
 
 #define SERVER_MAXLINES 1024
 #define SERVER_LINEMAX 1024
+#define SHUTDOWN_COMMAND "stop"
 
 struct server_t {
     pid_t pid;
@@ -60,6 +61,7 @@ void server_free(struct server_t *server);
 int server_start(struct server_t *server);
 int server_send(struct server_t *server, const char *message);
 void server_stop(struct server_t *server, int exit);
+void server_stop_kill(struct server_t *server, int exit, int wait);
 int server_kill(struct server_t *server, int exit);
 void server_resume(struct server_t *server);
 

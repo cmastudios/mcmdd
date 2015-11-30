@@ -139,7 +139,21 @@ void server_stop(struct server_t *server, int exit)
     if (server->status == STATUS_STOPPED)
         return;
     server->status = STATUS_STOPPING;
-    server_send(server, "stop\n");
+    server_send(server, SHUTDOWN_COMMAND);
+}
+
+void server_stop_kill(struct server_t *server, int exit, int wait)
+{
+    int time_waited_ms = 0;
+    server_stop(server, exit);
+    printf("[%s] Waiting (max %d seconds) for server to stop.\n", server->id, wait);
+    while (server->status == STATUS_STOPPING) {
+        usleep(100000);
+        time_waited_ms += 100;
+        if (time_waited_ms > wait * 1000) {
+            server_kill(server, exit);
+        }
+    }
 }
 
 int server_kill(struct server_t *server, int exit)
@@ -150,6 +164,7 @@ int server_kill(struct server_t *server, int exit)
         server->ctrl = CTRL_PAUSE;
     if (server->status == STATUS_STOPPED)
         return -1;
+    server->status = STATUS_STOPPED;
     printf("[%s] Killing server process %d\n", server->id, server->pid);
     add_line(server, "Server process killed");
     return kill(server->pid, SIGKILL);

@@ -120,6 +120,9 @@ static inline int server_has_warmed_up(struct server_t *server)
 void *thread_start_wrapper(void *ptr)
 {
     struct server_t *server = ptr;
+#ifdef __APPLE__
+    pthread_setname_np(server->id);
+#endif
     while (1) {
         server->ctrl = CTRL_CLEAN;
         server_start(server);
@@ -145,6 +148,9 @@ static void run_server(struct server_t *server, int id)
     
     thread = malloc(sizeof(pthread_t *));
     rc = pthread_create(thread, NULL, thread_start_wrapper, server);
+#ifdef __linux__
+    pthread_setname_np(*thread, server->id);
+#endif
     if (rc)
         err(1, "pthread_create for %s", server->id);
     threads[threads_sp] = thread;
