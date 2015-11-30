@@ -104,6 +104,19 @@ static inline int server_pause_loop(struct server_t *server)
     }
 }
 
+static inline int server_has_warmed_up(struct server_t *server)
+{
+    time_t now, duration;
+    const char *warmup_s;
+    int warmup;
+    
+    time(&now);
+    duration = now - server->start;
+    warmup_s = config_get(config, server->id, "warmup", "0");
+    sscanf(warmup_s, "%d", &warmup);
+    return duration > warmup;
+}
+
 void *thread_start_wrapper(void *ptr)
 {
     struct server_t *server = ptr;
@@ -113,6 +126,11 @@ void *thread_start_wrapper(void *ptr)
         // set when the daemon is killing all other servers, so quit
         if (server->ctrl == CTRL_EXIT)
             return NULL;
+        // do not start the server up immediately unless x seconds have passed
+        if (server->ctrl == CTRL_CLEAN && !server_has_warmed_up(server)) {
+            printf("[%s] Paused - failed to keep server running long enough.\n", server->id);
+            server->ctrl = CTRL_PAUSE;
+        }
         // set by control when a shutdown is anticipated
         if (server->ctrl == CTRL_PAUSE
             && server_pause_loop(server) == 0)
