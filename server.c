@@ -125,7 +125,7 @@ int server_send(struct server_t *server, const char *message)
     if (server->status == STATUS_STOPPED)
         return -1;
     add_line(server, message);
-    printf("[%s] < %s\n", server->id, message);
+    printf("[%s] < %s", server->id, message);
     write(server->pipein, message, strlen(message));
     return 0;
 }

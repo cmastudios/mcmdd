@@ -44,7 +44,7 @@ enum exit {
 
 #define SERVER_MAXLINES 1024
 #define SERVER_LINEMAX 1024
-#define SHUTDOWN_COMMAND "stop"
+#define SHUTDOWN_COMMAND "stop\n"
 
 struct server_t {
     pid_t pid;
