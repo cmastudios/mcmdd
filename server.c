@@ -125,7 +125,7 @@ int server_send(struct server_t *server, const char *message)
     if (server->status == STATUS_STOPPED)
         return -1;
     add_line(server, message);
-    printf("[%s] < %s\n", server->id, message);
+    printf("[%s] < %s", server->id, message);
     write(server->pipein, message, strlen(message));
     return 0;
 }
@@ -139,7 +139,21 @@ void server_stop(struct server_t *server, int exit)
     if (server->status == STATUS_STOPPED)
         return;
     server->status = STATUS_STOPPING;
-    server_send(server, "stop\n");
+    server_send(server, SHUTDOWN_COMMAND);
+}
+
+void server_stop_kill(struct server_t *server, int exit, int wait)
+{
+    int time_waited_ms = 0;
+    server_stop(server, exit);
+    printf("[%s] Waiting (max %d seconds) for server to stop.\n", server->id, wait);
+    while (server->status == STATUS_STOPPING) {
+        usleep(100000);
+        time_waited_ms += 100;
+        if (time_waited_ms > (wait * 1000)) {
+            server_kill(server, exit);
+        }
+    }
 }
 
 int server_kill(struct server_t *server, int exit)
@@ -150,6 +164,7 @@ int server_kill(struct server_t *server, int exit)
         server->ctrl = CTRL_PAUSE;
     if (server->status == STATUS_STOPPED)
         return -1;
+    server->status = STATUS_STOPPED;
     printf("[%s] Killing server process %d\n", server->id, server->pid);
     add_line(server, "Server process killed");
     return kill(server->pid, SIGKILL);
@@ -157,7 +172,20 @@ int server_kill(struct server_t *server, int exit)
 
 void server_resume(struct server_t *server)
 {
+    if (server->status == STATUS_BACKUP) {
+        // do not resume the server during a backup
+        return;
+    }
     server->ctrl = CTRL_LAUNCH;
+}
+
+void server_set_backup(struct server_t *server, int flag)
+{
+    if (flag) {
+        server->status = STATUS_BACKUP;
+    } else {
+        server->status = STATUS_STOPPED;
+    }
 }
 
 int server_start(struct server_t *server)

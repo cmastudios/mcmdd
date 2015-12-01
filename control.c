@@ -286,6 +286,9 @@ clean:
 
 void *control_thread(void *data)
 {
+#ifdef __APPLE__
+    pthread_setname_np("mcmdd [connection]");
+#endif
     control_read(*((int *)data));
     pthread_exit(NULL);
 }
@@ -304,6 +307,9 @@ void control_accept()
             err(1, "accept");
         pthread_t threadId;
         rc = pthread_create(&threadId, NULL, &control_thread, (void *) &fd);
+#ifdef __linux__
+        pthread_setname_np(threadId, "mcmdd [connection]");
+#endif
         if (pthread_detach(threadId) != 0) {
             warn("Failed to detach control thread, running sync");
             pthread_join(threadId, &status);

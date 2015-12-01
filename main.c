@@ -24,6 +24,7 @@ const char *program_name;
 struct config_t *config;
 struct server_t **servers;
 pthread_t **threads;
+pthread_t backup_thread;
 int servers_sp, threads_sp;
 
 void control_init();
@@ -120,6 +121,9 @@ static inline int server_has_warmed_up(struct server_t *server)
 void *thread_start_wrapper(void *ptr)
 {
     struct server_t *server = ptr;
+#ifdef __APPLE__
+    pthread_setname_np(server->id);
+#endif
     while (1) {
         server->ctrl = CTRL_CLEAN;
         server_start(server);
@@ -145,6 +149,9 @@ static void run_server(struct server_t *server, int id)
     
     thread = malloc(sizeof(pthread_t *));
     rc = pthread_create(thread, NULL, thread_start_wrapper, server);
+#ifdef __linux__
+    pthread_setname_np(*thread, server->id);
+#endif
     if (rc)
         err(1, "pthread_create for %s", server->id);
     threads[threads_sp] = thread;
@@ -178,9 +185,84 @@ static void stop_servers()
     
     puts("[daemon] Stopping all servers");
     for (i = 0; i < servers_sp; ++i) {
-        server_stop(servers[i], EXIT_FULL);
+        server_stop_kill(servers[i], EXIT_FULL, MAX_WAIT);
         pthread_join(*threads[i], &status);
     }
+}
+
+void *backup_monitor(void *ptr)
+{
+    size_t i;
+    const char *freq_s, *backup_command;
+    char backup_folder[256], backup_name[256], command[256];
+    int freq, tmin, rc;
+    time_t now;
+    struct tm *timeinfo;
+    
+#ifdef __APPLE__
+    pthread_setname_np("mcmdd [backup]");
+#elif __linux__
+    pthread_setname_np(backup_thread, "mcmdd [backup]");
+#endif
+    if (access(BACKUP_DIRECTORY, F_OK) == -1 && mkdir(BACKUP_DIRECTORY, 0777) < 0) {
+        err(1, "Failed to create backup directory");
+    }
+    backup_command = config_get(config, NULL, "backup_command", DEFAULT_BACKUP);
+    while (1) {
+        // every minute check
+        sleep(60);
+        time(&now);
+        tmin = now / 60;
+        timeinfo = localtime(&now);
+        strftime(backup_name, sizeof(backup_name), BACKUP_DATE, timeinfo);
+        for (i = 0; i < servers_sp; ++i) {
+            struct server_t *server = servers[i];
+            freq_s = config_get(config, server->id, "backup_frequency", "0");
+            freq = 0;
+            sscanf(freq_s, "%d", &freq);
+            if (freq == 0) {
+                continue;
+            }
+            if (tmin % freq != 0) {
+                continue;
+            }
+            // if freq is 30 (every 30 minutes) it will run every half-hour
+            snprintf(backup_folder, sizeof(backup_folder), BACKUP_DIRECTORY "/%s/", server->id);
+            
+            if (access(backup_folder, F_OK) == -1 && mkdir(backup_folder, 0777) < 0) {
+                warn("Failed to make backup directory for server %s", server->id);
+                continue;
+            }
+            strncat(backup_folder, backup_name, sizeof(backup_folder) - strlen(backup_folder) - 1);
+            snprintf(command, sizeof(command), backup_command, backup_folder, server->id);
+            // stop the server
+            server_stop_kill(server, EXIT_PAUSE, MAX_WAIT);
+            // prevent clients from starting the server during a backup
+            server_set_backup(server, 1);
+            printf("[%s] Running scheduled backup.\n", server->id);
+            printf("[%s] >%s\n", server->id, command);
+            rc = system(command);
+            if (rc == 0) {
+                printf("[%s] Backup succeeded!\n", server->id);
+            } else if (rc != -1) {
+                printf("[%s] Backup failed with code %d.\n", server->id, rc);
+            } else {
+                warn("Failed to run command %s", command);
+            }
+            // unlock and bring the server back online
+            server_set_backup(server, 0);
+            server_resume(server);
+        }
+    }
+}
+
+static void start_backup_monitor()
+{
+    int rc;
+    
+    rc = pthread_create(&backup_thread, NULL, backup_monitor, NULL);
+    if (rc)
+        err(1, "pthread_create for backup monitor");
 }
 
 static void cleanup()
@@ -218,6 +300,7 @@ void signal_handler(int signum)
     if (signum == SIGTERM)
         kill_servers();
     control_stop();
+    pthread_cancel(backup_thread);
     puts("[daemon] Cleaning up");
     cleanup();
     exit(1);
@@ -276,6 +359,7 @@ int main(int argc, char **argv)
     program_name = argv[0];
     dofork = 0; // change to 1 for release
     data_dir = NULL;
+    setbuf(stdout, NULL);
     
     while ((ch = getopt(argc, argv, "nfd:u:")) != -1) {
         switch (ch) {
@@ -314,5 +398,6 @@ int main(int argc, char **argv)
     control_init();
     load_servers();
     run_servers();
+    start_backup_monitor();
     control_accept();
 }
