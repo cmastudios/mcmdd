@@ -150,7 +150,7 @@ void server_stop_kill(struct server_t *server, int exit, int wait)
     while (server->status == STATUS_STOPPING) {
         usleep(100000);
         time_waited_ms += 100;
-        if (time_waited_ms > wait * 1000) {
+        if (time_waited_ms > (wait * 1000)) {
             server_kill(server, exit);
         }
     }
