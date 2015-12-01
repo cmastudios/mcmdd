@@ -359,6 +359,7 @@ int main(int argc, char **argv)
     program_name = argv[0];
     dofork = 0; // change to 1 for release
     data_dir = NULL;
+    setbuf(stdout, NULL);
     
     while ((ch = getopt(argc, argv, "nfd:u:")) != -1) {
         switch (ch) {
